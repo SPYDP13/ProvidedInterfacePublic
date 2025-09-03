@@ -45,7 +45,7 @@ interface BluentGenericController<
     fun getById(@PathVariable id: ID): RESPONSE = service.getById(id)
 
     @BluentCheckPermission("read")
-    @GetMapping("getAllWithPaging")
+    @PostMapping("getAllWithPaging")
     fun getAllWithPaging(@RequestBody request: PagingRequest): Page<RESPONSE> = service.getAllWithPaging(request)
 
     @BluentCheckPermission("delete")

@@ -26,7 +26,7 @@ repositories {
 		isAllowInsecureProtocol = true
 		credentials {
 			username = "admin"
-			password = "561023497Sy*"
+			password = ""
 		}
 	}
 	maven {
@@ -106,7 +106,7 @@ publishing {
 			from(components["java"]) // ou "kotlin" si applicable
 			groupId = "com.github.bluent"
 			artifactId = "interfaces-module"
-			version = "1.0.1"
+			version = "1.0.2"
 		}
 	}
 
