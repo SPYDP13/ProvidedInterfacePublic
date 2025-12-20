@@ -4,6 +4,9 @@ import com.bluent.annotations.annotation.BluentCheckPermission
 import com.bluent.interfaces.providedInterface.model.BluentGenericModel
 import com.bluent.interfaces.providedInterface.model.MultiCreateResponse
 import com.bluent.interfaces.providedInterface.model.PagingRequest
+import com.bluent.interfaces.providedInterface.model.sync.DataSyncComplement
+import com.bluent.interfaces.providedInterface.model.sync.DataSyncDTO
+import com.bluent.interfaces.providedInterface.model.sync.OfflineSyncDTO
 import com.bluent.interfaces.providedInterface.repository.BluentGenericRepository
 import com.bluent.interfaces.providedInterface.service.BluentGenericService
 import org.springframework.data.domain.Page
@@ -55,4 +58,13 @@ interface BluentGenericController<
     @BluentCheckPermission("delete")
     @DeleteMapping("deleteAll")
     fun deleteAll(): Boolean = service.deleteAll()
+
+    @BluentCheckPermission("update")
+    @PostMapping("syncOnline")
+    fun syncOnline(@RequestBody dto: DataSyncDTO<DTO, RESPONSE>): DataSyncDTO<DTO, RESPONSE> = service.syncOnline(dto)
+
+    @BluentCheckPermission("update")
+    @PostMapping("syncOffline")
+    fun syncOffline(@RequestBody dto: OfflineSyncDTO): MutableList<RESPONSE> = service.syncOffline(dto.date)
+
 }

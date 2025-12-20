@@ -4,11 +4,15 @@ import com.bluent.interfaces.providedInterface.model.BluentGenericModel
 import com.bluent.interfaces.providedInterface.model.MultiCreateErrorResponse
 import com.bluent.interfaces.providedInterface.model.MultiCreateResponse
 import com.bluent.interfaces.providedInterface.model.PagingRequest
+import com.bluent.interfaces.providedInterface.model.sync.DataSyncComplement
+import com.bluent.interfaces.providedInterface.model.sync.DataSyncDTO
 import com.bluent.interfaces.providedInterface.repository.BluentGenericRepository
+import com.bluent.interfaces.providedInterface.repository.BluentGenericSpec
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlin.reflect.KClass
 
 interface BluentGenericService<
@@ -72,5 +76,70 @@ interface BluentGenericService<
         }
         repo.saveAll(data)
         return true
+    }
+
+    fun syncOnline(dto: DataSyncDTO<DTO, RESPONSE>): DataSyncDTO<DTO, RESPONSE>{
+        println("Syncing>>>>>>>>>>>>> $dto")
+        val finalRespone = DataSyncDTO<DTO, RESPONSE>(mutableListOf())
+        dto.data.forEach {
+            if (it.operation=== DataSyncComplement.DataSyncComplementOperation.CREATE){ //Operation de creation
+                val toSync = it.data
+//                toSync.createdAt = it.operationDate
+                val created = create(toSync)
+                finalRespone.data.add(
+
+                    DataSyncComplement(
+                        data = toSync,
+                        operation = it.operation,
+                        responses = created,
+                        operationDate = null,
+                        oldId = it.oldId,
+                        sync = false
+                    )
+                )
+            }
+            if (it.operation=== DataSyncComplement.DataSyncComplementOperation.UPDATE){ //Operation de creation
+                val toSync = it.data
+//                toSync.createdAt = it.operationDate
+//                toSync.id = UUID.fromString(it.oldId)
+                val updated = update(toSync)
+                finalRespone.data.add(
+                    DataSyncComplement(
+                        data = toSync,
+                        operation = it.operation,
+                        responses = updated,
+                        operationDate = null,
+                        oldId = it.oldId,
+                        sync = false
+                    )
+                )
+            }
+            if (it.operation=== DataSyncComplement.DataSyncComplementOperation.DELETE){ //Operation de creation
+                val toSync = it.data
+//                toSync.createdAt = it.operationDate
+                val deleted = delete(convertStringToUUID(it.oldId)!!)
+                finalRespone.data.add(
+                    DataSyncComplement(
+                        data = toSync,
+                        operation = it.operation,
+                        responses = null,
+                        operationDate = null,
+                        oldId = it.oldId,
+                        sync = false
+                    )
+                )
+            }
+        }
+        return finalRespone
+    }
+
+    fun syncOffline(date: LocalDateTime?): MutableList<RESPONSE>{
+        val spec= BluentGenericSpec<ID, DTO, RESPONSE, T>()
+        val afterDatePredicate = spec.getDataAfterCreated(date)
+        return repo.findAll(afterDatePredicate).map { it.toResponse() }.toMutableList()
+    }
+
+    fun convertStringToUUID(string: String?): ID? {
+        return null
     }
 }
