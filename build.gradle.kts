@@ -59,7 +59,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.github.bluent"   // ton GitHub username
+            groupId = "com.github.SPYDP13"   // ton GitHub username
             artifactId = "interfaces-module-public"
             version = "1.0.3" // doit correspondre au tag GitHub
         }
