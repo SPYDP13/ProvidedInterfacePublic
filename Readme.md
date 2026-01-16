@@ -599,4 +599,4 @@ Pour toute question ou problème, veuillez contacter l'équipe de développement
 
 ---
 
-**Développé avec ❤️ par l'équipe Bluent/Nebryon**
+**Développé par l'équipe Bluent/Nebryon**
