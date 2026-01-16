@@ -392,12 +392,170 @@ Model/Entity (Entités JPA)
 
 ## 🔐 Gestion des permissions
 
-Chaque route est protégée par l'annotation `@BluentCheckPermission` qui vérifie les droits d'accès :
+Le module utilise un système de permissions basé sur AOP (Aspect-Oriented Programming) pour protéger automatiquement toutes les routes REST. Le système combine deux annotations pour construire dynamiquement les permissions.
 
-- **create** - Permission de création
-- **read** - Permission de lecture
-- **update** - Permission de modification
-- **delete** - Permission de suppression
+### Architecture du système de permissions
+
+Le système de permissions fonctionne en deux étapes :
+
+1. **Activation des permissions sur un controller** : Utilisation de l'annotation `@EnableBluentAutoCheckPermission`
+2. **Protection des méthodes** : Utilisation de l'annotation `@BluentCheckPermission` sur chaque méthode
+
+### Annotations disponibles
+
+#### `@EnableBluentAutoCheckPermission`
+
+Annotation à placer **au niveau de la classe** du controller pour activer la gestion automatique des permissions.
+
+```kotlin
+@RestController
+@RequestMapping("/api/products")
+@EnableBluentAutoCheckPermission(name = "product")
+class ProductController(
+    override var service: ProductServiceImpl
+) : BluentGenericController<ProductDTO, ProductResponse, UUID, Product, ProductRepository, ProductServiceImpl>
+```
+
+**Paramètres :**
+- `name: String` - Le nom de la ressource (ex: "product", "user", "order")
+
+> **Important :** Sans cette annotation sur le controller, les vérifications de permissions ne seront pas effectuées, même si `@BluentCheckPermission` est présent sur les méthodes.
+
+#### `@BluentCheckPermission`
+
+Annotation à placer **au niveau des méthodes** pour spécifier l'action à vérifier.
+
+```kotlin
+@BluentCheckPermission("create")
+@PostMapping("create")
+fun create(@RequestBody dto: ProductDTO): ProductResponse = service.create(dto)
+```
+
+**Paramètres :**
+- `action: String` - L'action à vérifier (ex: "create", "read", "update", "delete")
+- `exhaustive: Boolean = false` - Mode de construction de la permission (voir ci-dessous)
+
+### Construction des permissions
+
+Le système construit la permission finale selon deux modes :
+
+#### Mode non-exhaustif (par défaut, `exhaustive = false`)
+
+La permission est construite en combinant l'action et le nom de la ressource :
+- Format : `ACTION_UPPERCASE_RESOURCENAME_UPPERCASE`
+- Exemple : `CREATE_PRODUCT`, `READ_PRODUCT`, `UPDATE_PRODUCT`, `DELETE_PRODUCT`
+
+```kotlin
+@BluentCheckPermission("create")  // exhaustive = false par défaut
+@PostMapping("create")
+fun create(@RequestBody dto: ProductDTO): ProductResponse = service.create(dto)
+// Permission vérifiée : "CREATE_PRODUCT"
+```
+
+#### Mode exhaustif (`exhaustive = true`)
+
+La permission utilisée est exactement l'action fournie, sans combinaison avec le nom de la ressource :
+
+```kotlin
+@BluentCheckPermission("create", exhaustive = true)
+@PostMapping("create")
+fun create(@RequestBody dto: ProductDTO): ProductResponse = service.create(dto)
+// Permission vérifiée : "create"
+```
+
+### Actions disponibles
+
+Les actions standard utilisées dans `BluentGenericController` sont :
+
+- **`create`** - Permission de création
+- **`read`** - Permission de lecture
+- **`update`** - Permission de modification
+- **`delete`** - Permission de suppression
+
+### Fonctionnement technique
+
+Le système utilise un aspect AOP (`CheckPermissionAspect`) qui :
+
+1. Intercepte toutes les méthodes annotées avec `@BluentCheckPermission`
+2. Récupère l'action depuis l'annotation
+3. Récupère le nom de la ressource depuis `@EnableBluentAutoCheckPermission` sur le controller
+4. Construit la permission finale selon le mode (exhaustif ou non)
+5. Appelle `CheckPermissionService.hasPermission(permission)` pour vérifier
+6. Lance une `AccessDeniedException` si la permission n'est pas accordée
+
+### Personnalisation de la logique de vérification
+
+Pour modifier la logique de vérification des permissions, vous pouvez créer votre propre service qui implémente l'interface `CheckPermissionService` et surcharger la méthode `hasPermission`.
+
+**Interface à implémenter :**
+
+```kotlin
+interface CheckPermissionService {
+    fun hasPermission(permission: String): Boolean
+}
+```
+
+**Exemple d'implémentation personnalisée :**
+
+```kotlin
+@Service
+@Primary
+class CustomCheckPermissionServiceImpl : CheckPermissionService {
+    val log = LoggerFactory.getLogger(this.javaClass)
+
+    override fun hasPermission(permission: String): Boolean {
+        // Votre logique personnalisée ici
+        val auth = SecurityContextHolder.getContext().authentication
+        log.info("Vérification permission: $permission pour ${auth.name}")
+        log.info("Autorités: ${auth.authorities.map { it.authority }}")
+        return auth?.authorities?.any { it.authority == permission } == true
+    }
+}
+```
+
+> **Important :** N'oubliez pas d'ajouter l'annotation `@Primary` à votre service personnalisé pour qu'il remplace l'implémentation par défaut.
+
+**Implémentation par défaut :**
+
+Le module fournit une implémentation par défaut `CheckPermissionServiceImpl` qui vérifie les permissions via Spring Security :
+
+```kotlin
+@Service
+@Primary
+class CheckPermissionServiceImpl : CheckPermissionService {
+    val log = LoggerFactory.getLogger(this.javaClass)
+
+    override fun hasPermission(permission: String): Boolean {
+        val auth = SecurityContextHolder.getContext().authentication
+        log.info("Auth: ${auth.name} ${auth.authorities.map { it.authority }}")
+        return auth?.authorities?.any { it.authority == permission } == true
+    }
+}
+```
+
+Cette implémentation par défaut vérifie que l'utilisateur authentifié possède l'autorité correspondant à la permission demandée dans le contexte de sécurité Spring.
+
+### Exemple complet
+
+```kotlin
+@RestController
+@RequestMapping("/api/products")
+@EnableBluentAutoCheckPermission(name = "product")
+class ProductController(
+    override var service: ProductServiceImpl
+) : BluentGenericController<ProductDTO, ProductResponse, UUID, Product, ProductRepository, ProductServiceImpl> {
+    
+    // Les méthodes héritées de BluentGenericController sont déjà protégées
+    // avec @BluentCheckPermission("create"), @BluentCheckPermission("read"), etc.
+    // Les permissions vérifiées seront : CREATE_PRODUCT, READ_PRODUCT, UPDATE_PRODUCT, DELETE_PRODUCT
+}
+```
+
+Dans cet exemple, l'utilisateur doit posséder les autorités suivantes dans Spring Security :
+- `CREATE_PRODUCT` pour créer un produit
+- `READ_PRODUCT` pour lire les produits
+- `UPDATE_PRODUCT` pour modifier un produit
+- `DELETE_PRODUCT` pour supprimer un produit
 
 ## 📊 Modèle de données
 
