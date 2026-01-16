@@ -7,12 +7,6 @@ import kotlin.collections.any
 import kotlin.collections.map
 
 
-@Service
-class CheckPermissionService {
-    val log = LoggerFactory.getLogger(this.javaClass)
-    fun hasPermission(permission: String): Boolean{
-        val auth = SecurityContextHolder.getContext().authentication
-        log.info("Auth: ${auth.name} ${auth.authorities.map { it.authority }}")
-        return auth?.authorities?.any {it.authority==permission} == true
-    }
+interface CheckPermissionService {
+    fun hasPermission(permission: String): Boolean
 }

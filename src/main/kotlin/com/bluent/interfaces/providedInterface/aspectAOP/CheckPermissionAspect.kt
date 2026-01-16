@@ -36,7 +36,7 @@ class CheckPermissionAspect(
                 throw AccessDeniedException("Vous n'êtes pas autorisé à effectué cette opération !")
             }
         } else {
-            println("Classe non annoté pour gérer les permissions !")
+            println("Classe non annotée pour gérer les permissions !")
         }
 
     }

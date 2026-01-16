@@ -1,6 +1,6 @@
 # Bluent Interfaces Module
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)](http://148.230.116.99:8081/repository/NebryonModule/)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](http://148.230.116.99:8081/repository/NebryonPublicModules/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.25-purple.svg)](https://kotlinlang.org/)
 
@@ -12,6 +12,7 @@ Module Spring Boot/Kotlin fournissant des interfaces génériques pour le provis
 - [Fonctionnalités](#-fonctionnalités)
 - [Installation](#-installation)
 - [Guide de démarrage rapide](#-guide-de-démarrage-rapide)
+- [Plugin IntelliJ - Génération automatique des couches](#-plugin-intellij---génération-automatique-des-couches)
 - [Routes REST disponibles](#-routes-rest-disponibles)
 - [Exemples d'utilisation](#-exemples-dutilisation)
 - [Configuration](#-configuration)
@@ -50,17 +51,13 @@ Ajoutez le repository Nexus dans votre `build.gradle.kts` :
 repositories {
     maven {
         name = "nexus"
-        url = uri("http://148.230.116.99:8081/repository/NebryonModule/")
+        url = uri("http://148.230.116.99:8081/repository/NebryonPublicModules/")
         isAllowInsecureProtocol = true
-        credentials {
-            username = "admin"
-            password = System.getenv("NEXUS_PASSWORD")
-        }
     }
 }
 
 dependencies {
-    implementation("com.nebryon.modules:interfaces-module:1.0.5")
+    implementation("com.nebryon.modules:interfaces-module:version")
 }
 ```
 
@@ -158,6 +155,88 @@ class ProductController(
 ```
 
 **C'est tout !** Votre API REST complète est maintenant prête avec toutes les routes CRUD.
+
+## 🔌 Plugin IntelliJ - Génération automatique des couches
+
+Un plugin IntelliJ est disponible pour générer automatiquement les couches (Repository, Service, Controller) à partir de vos modèles de classe. Ce plugin simplifie considérablement la création des différentes couches de votre architecture.
+
+### Installation du plugin IntelliJ
+
+1. **Télécharger le plugin**
+   - Le plugin est disponible sous forme de fichier ZIP : `generateNebryonOperations.zip`
+
+2. **Installer le plugin dans IntelliJ IDEA**
+   - Ouvrez IntelliJ IDEA
+   - Allez dans **Settings/Preferences** (⌘, sur Mac ou Ctrl+Alt+S sur Windows/Linux)
+   - Naviguez vers **Plugins**
+   - Cliquez sur l'icône ⚙️ (engrenage) à côté de l'onglet "Installed"
+   - Sélectionnez **"Install Plugin from Disk..."**
+   - Choisissez le fichier `generateNebryonOperations.zip`
+   - Redémarrez IntelliJ IDEA si nécessaire
+
+3. **Configurer la tâche Gradle**
+
+   Le plugin utilise une tâche Gradle pour effectuer la génération. Vous devez configurer votre projet Gradle pour y avoir accès.
+
+   **a) Ajouter le plugin dans `build.gradle.kts` :**
+
+   ```kotlin
+   plugins {
+       // ... vos autres plugins ...
+       id("com.nebryon.generic-generator") version "1.0.12"
+   }
+   ```
+
+   **b) Configurer le repository dans `settings.gradle.kts` :**
+
+   ```kotlin
+   pluginManagement {
+       repositories {
+           maven {
+               url = uri("http://148.230.116.99:8081/repository/NebryonModule/")
+               isAllowInsecureProtocol = true
+           }
+           gradlePluginPortal() // fallback
+       }
+   }
+   ```
+
+   > **Note :** Le code source de la tâche Gradle est disponible sur GitHub : [NebryonGenericOperationsGeneratorGradleTask](https://github.com/SPYDP13/NebryonGenericOperationsGeneratorGradleTask.git)
+
+### Utilisation du plugin
+
+Une fois le plugin installé et la tâche Gradle configurée :
+
+1. **Créer votre modèle de classe**
+   - Créez votre entité implémentant `BluentGenericModel`
+
+2. **Générer les couches automatiquement**
+   - Faites un **clic droit** sur votre fichier de modèle dans l'explorateur de projet
+   - Dans le menu contextuel, sélectionnez **"Generate Nebryon Generic Operation"** (en bas du menu)
+   - Le plugin va automatiquement générer :
+     - Le **Repository** (interface étendant `BluentGenericRepository`)
+     - L'**interface Service** (implémentant `BluentGenericService`)
+     - L'**implémentation du Service** (classe concrète)
+     - Le **Controller** (classe étendant `BluentGenericController`)
+
+### Configuration des chemins de génération
+
+Pour personnaliser les chemins de génération des couches, vous pouvez configurer les propriétés suivantes dans votre fichier `application.properties` :
+
+```properties
+app.basePackage=com.packageDeVotreProjet.votreProjet
+app.repoPackage=com.packageDeVotreProjet.votreProjet.repository
+app.servicePackage=com.packageDeVotreProjet.votreProjet.service
+app.controllerPackage=com.packageDeVotreProjet.votreProjet.controller
+```
+
+### Comportement par défaut
+
+Si ces propriétés ne sont pas précisées dans `application.properties`, le plugin utilisera le comportement par défaut suivant :
+- Les couches seront créées dans le répertoire du projet selon la structure : `projetdirectory/nomCouches`
+  - Exemple : `projetdirectory/repository`, `projetdirectory/service`, `projetdirectory/controller`
+
+Le plugin respectera les chemins configurés dans `application.properties` ou utilisera la structure par défaut si aucune configuration n'est fournie.
 
 ## 📡 Routes REST disponibles
 
