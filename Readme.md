@@ -57,7 +57,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.nebryon.modules:interfaces-module:version")
+    implementation("com.nebryon.modules:interfaces-module:version") //Version en cours 1.0.0
 }
 ```
 
