@@ -1,10 +1,9 @@
 package com.bluent.interfaces.providedInterface.controller
 
-import com.bluent.annotations.annotation.BluentCheckPermission
+import com.bluent.interfaces.providedInterface.annotation.BluentCheckPermission
 import com.bluent.interfaces.providedInterface.model.BluentGenericModel
 import com.bluent.interfaces.providedInterface.model.MultiCreateResponse
 import com.bluent.interfaces.providedInterface.model.PagingRequest
-import com.bluent.interfaces.providedInterface.model.sync.DataSyncComplement
 import com.bluent.interfaces.providedInterface.model.sync.DataSyncDTO
 import com.bluent.interfaces.providedInterface.model.sync.OfflineSyncDTO
 import com.bluent.interfaces.providedInterface.repository.BluentGenericRepository
