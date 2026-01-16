@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.github.bluent"
-version = "1.0.3" // correspond au tag GitHub
+version = "1.0.4" // correspond au tag GitHub
 
 val springBootVersion = "3.4.5"
 
@@ -61,7 +61,7 @@ publishing {
             from(components["java"])
             groupId = "com.github.SPYDP13"   // ton GitHub username
             artifactId = "interfaces-module-public"
-            version = "1.0.3" // doit correspondre au tag GitHub
+            version = "1.0.4" // doit correspondre au tag GitHub
         }
     }
     repositories {
